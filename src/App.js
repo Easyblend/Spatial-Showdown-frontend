@@ -1,24 +1,29 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from 'react';
+import { Stack } from '@mui/material';
+import Map from './Component/Map';
+import WebSocketComponent from './Component/WebSocket';
+import { PlayerProvider } from './Hooks/UsePlayerData';
+import Navbar from './Component/Navbar';
+import Background from './Component/Background';
 
 function App() {
+  const [page, setPage] = React.useState('websocket');
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <PlayerProvider>
+      <Stack
+        width="100vw"
+        height="100vh"
+      >
+        <Background />
+        <Navbar />
+        {page === 'map' ? (
+          <Map page={page} setPage={setPage} />
+        ) : (
+          <WebSocketComponent setPage={setPage} page={page} />
+        )}
+      </Stack>
+    </ PlayerProvider>
   );
 }
 
