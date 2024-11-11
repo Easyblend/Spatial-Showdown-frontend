@@ -6,7 +6,7 @@ import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 import { usePlayerContext } from '../Hooks/UsePlayerData';
 
-function WebSocketComponent({ setPage }) {
+function Home({ setPage }) {
   const [inputValue, setInputValue] = useState('');
   const [oppName, setOppName] = useState('');
   const [name, setName] = useState('');
@@ -157,4 +157,4 @@ function WebSocketComponent({ setPage }) {
   );
 }
 
-export default WebSocketComponent;
+export default Home;

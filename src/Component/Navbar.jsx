@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { Stack } from '@mui/material';
 
-export default function Navbar() {
+export default function Navbar({ setPage }) {
   return (
     <Box
       zIndex={100}
@@ -16,22 +16,43 @@ export default function Navbar() {
         <Toolbar>
           <Typography
             variant="h5"
-            component="div"
+            component="a"
+            href="/"
             sx={{
               flexGrow: 1,
               fontFamily: 'retrogamer',
               fontWeight: 700,
+              textDecoration: 'none',
+              color: 'inherit',
               letterSpacing: 2,
               textShadow: '-1px 0px #b31, 1px 0px #f3b;',
             }}
           >
-            City Stealer
+            Spatial War
           </Typography>
           <Stack direction="row">
-            <Button color="inherit">Creator</Button>
-            <Button color="inherit">Technology</Button>
+            <Button
+              component="a"
+              href="https://github.com/Easyblend"
+              color="inherit"
+              target="_blank"
+            >
+              Creator
+            </Button>
+            <Button
+              color="inherit"
+              onClick={() => setPage('technology')}
+            >
+              Technology
+            </Button>
           </Stack>
-          <Button color="success" variant="contained">Play</Button>
+          <Button
+            color="success"
+            variant="contained"
+            onClick={() => setPage('websocket')}
+          >
+            Play
+          </Button>
         </Toolbar>
       </AppBar>
     </Box>

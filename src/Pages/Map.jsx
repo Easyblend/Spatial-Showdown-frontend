@@ -9,10 +9,11 @@ import { toast } from 'react-toastify';
 import {
   Avatar, Button, Divider, Stack, Typography,
 } from '@mui/material';
-import QuestionDialog from './Questions Popovers/QuestionDialog';
+import Confetti from 'react-confetti';
+import QuestionDialog from '../Component/Questions Popovers/QuestionDialog';
 import { usePlayerContext } from '../Hooks/UsePlayerData';
-import Enemy from './CapturedNations/Enemy';
-import { Player } from './CapturedNations/Player';
+import Enemy from '../Component/CapturedNations/Enemy';
+import { Player } from '../Component/CapturedNations/Player';
 
 function Map({ setPage }) {
   const mapContainerRef = useRef();
@@ -27,6 +28,11 @@ function Map({ setPage }) {
   const [open, setOpen] = useState(false);
   const [countries, setCountries] = useState([]);
   const [choosenCountry, setChoosenCountry] = useState([]);
+
+  const [playerWins, setPlayerWins] = useState(false);
+  const [opponentWins, setOpponentWins] = useState(false);
+
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 
   const markerRefs = useRef([]);
 
@@ -66,6 +72,7 @@ function Map({ setPage }) {
         setCountries(countryNames);
       } catch (error) {
         toast.error('Error fetching country data:', error);
+        setPage('websocket');
       }
     };
     fetchCountries();
@@ -89,7 +96,7 @@ function Map({ setPage }) {
   }, [ownedCountries]);
 
   useEffect(() => {
-    const socket = new SockJS('http://localhost:8080/ws');
+    const socket = new SockJS('https://my-springboot-app-service.azurewebsites.net/ws');
     const stompClient = Stomp.over(socket);
 
     stompClient.connect({}, () => {
@@ -179,7 +186,7 @@ function Map({ setPage }) {
   // Initialize map
   useEffect(() => {
     if (!mapRef.current) {
-      mapboxgl.accessToken = 'pk.eyJ1IjoiZWt1bWFoIiwiYSI6ImNsc3gxdTl4dTB6eTQyanF0ZXQyZnFvNWgifQ.-Kl5xFcytSklzF7ASxfQkw'; // Replace with your actual token
+      mapboxgl.accessToken = 'pk.eyJ1IjoiZWt1bWFoIiwiYSI6ImNsc3gxdTl4dTB6eTQyanF0ZXQyZnFvNWgifQ.-Kl5xFcytSklzF7ASxfQkw';
       mapRef.current = new mapboxgl.Map({
         container: mapContainerRef.current,
         center: [-74.5, 40],
@@ -280,7 +287,7 @@ function Map({ setPage }) {
             },
           });
 
-          const ownedCountryNames = ownedCountries.map((country) => country.name);
+          const ownedCountryNames = ownedCountries.map((country) => country?.name);
           if (mapRef.current.getLayer('countries-fill')) {
             mapRef.current.removeLayer('countries-fill');
           }
@@ -358,8 +365,14 @@ function Map({ setPage }) {
     return coordinates;
   };
 
-  const sendDummyData = () => {
+  const AttckEnemy = () => {
     if (client && client.connected) {
+      setIsButtonDisabled(true);
+
+      // Re-enable the button after 2 seconds
+      setTimeout(() => {
+        setIsButtonDisabled(false);
+      }, 2000);
       const features = [
         {
           type: 'Feature',
@@ -395,9 +408,19 @@ function Map({ setPage }) {
         client.send('/app/cordinate', {}, JSON.stringify(messageToSend));
       });
     } else {
-      toast.loading('Client is not connected');
+      toast.error('Client is not connected');
     }
   };
+
+  useEffect(() => {
+    if (ownedCountries.length >= 10) {
+      setPlayerWins(true);
+    }
+
+    if (conqueredCountries.length >= 10) {
+      setOpponentWins(true);
+    }
+  }, [conqueredCountries, ownedCountries]);
 
   return (
     <Stack width="100vw" height="100vh" direction="row" zIndex={2}>
@@ -432,7 +455,14 @@ function Map({ setPage }) {
           <Avatar sx={{ width: 60, height: 60 }} src={player?.avatar} />
           {player && <Typography variant="h4">{player}</Typography>}
         </Stack>
-        <Stack>
+        <Stack
+          height="400px"
+          sx={{
+            overflowY: 'scroll',
+            // stylish scroll bar
+
+          }}
+        >
           <Player
             scoreLimit={scoreLimit}
             conqueredCountries={conqueredCountries}
@@ -440,7 +470,13 @@ function Map({ setPage }) {
           />
         </Stack>
         <Stack alignItems="center" marginBottom={4}>
-          <Button onClick={sendDummyData} variant="contained">Send Dummy JSON Data</Button>
+          <Button
+            onClick={AttckEnemy}
+            variant="contained"
+            disabled={isButtonDisabled}
+          >
+            Attack the Enemy
+          </Button>
         </Stack>
         <Divider>ENEMY OWNS</Divider>
         <Stack>
@@ -450,6 +486,48 @@ function Map({ setPage }) {
             ownedCountries={ownedCountries}
           />
         </Stack>
+      </Stack>
+      <Stack
+        height="100vh"
+        width="100vw"
+        position="absolute"
+        zIndex={(playerWins || opponentWins) ? 1 : -2}
+        top={0}
+        left={0}
+      >
+        {playerWins && (
+        <Confetti numberOfPieces={2000} />
+        )}
+        {(playerWins || opponentWins) && (
+        <Stack
+          height="100%"
+          width="100%"
+          justifyContent="center"
+          sx={{
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            overflow: 'hidden',
+            color: 'white', // Optional for better contrast
+            textAlign: 'center', // Center align text
+          }}
+        >
+          <div className="gameover">
+            <h1>{playerWins ? 'VICTORY' : 'GAME OVER'}</h1>
+            <span>
+              {playerWins ? `You conquered all Nations! and outsmarted ${opponent}` : `${opponent} conquered all Nations, He's Smarter`}
+            </span>
+          </div>
+          <Stack width="fit-content" marginX="auto">
+            <Button
+              variant="contained"
+              onClick={() => setPage('websocket')}
+              color={playerWins ? 'success' : 'error'}
+            >
+              {playerWins ? 'Gracefully ' : 'Shamefully ' }
+              head back to Menu
+            </Button>
+          </Stack>
+        </Stack>
+        )}
       </Stack>
     </Stack>
   );

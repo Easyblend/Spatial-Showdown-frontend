@@ -4,9 +4,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useRef } from 'react';
 
-export function Player({ conqueredCountries, ownedCountries, scoreLimit }) {
-  const scrollRef = useRef(null);
-
+export function Player({ ownedCountries, scoreLimit }) {
   const scorePercentage = (ownedCountries.length / scoreLimit) * 100;
 
   return (
@@ -16,13 +14,30 @@ export function Player({ conqueredCountries, ownedCountries, scoreLimit }) {
       marginY={3}
     >
       <Stack position="sticky" top={0} bgcolor="#F5F5F5" zIndex={1}>
-        <Typography textAlign="center" color="black">
+        <Typography textAlign="center" variant="h6" marginX={2} marginBottom={2} borderBottom="2px solid #aaa">
           Conquered countries by Player
         </Typography>
+        <Stack spacing={2} paddingX={10}>
+          <Stack direction="row" alignItems="center" justifyContent="center">
+            <TrophyIcon />
+            <Typography textAlign="center" color="black">
+              Score:
+              {' '}
+              {ownedCountries?.length}
+              /
+              {scoreLimit}
+            </Typography>
+          </Stack>
+          <LinearProgress
+            variant="determinate"
+            value={scorePercentage}
+            sx={{ borderRadius: 1, padding: 0.3 }}
+          />
+        </Stack>
       </Stack>
-      {ownedCountries.map((country) => (
+      {ownedCountries?.map((country) => (
         <Stack
-          key={country.name}
+          key={country?.name}
           direction="row"
           spacing={2}
           alignItems="center"
@@ -39,12 +54,12 @@ export function Player({ conqueredCountries, ownedCountries, scoreLimit }) {
             sx={{ width: 30, height: 30 }}
             onError={(e) => {
               e.target.onerror = null; // Prevent looping
-              e.target.src = country.name; // Fallback image URL
+              e.target.src = country?.name; // Fallback image URL
             }}
           >
             <img
-              src={country.flags}
-              alt={country.name}
+              src={country?.flags}
+              alt={country?.name}
               style={{
                 width: '100%', height: '100%', objectFit: 'cover', border: '1px solid #000',
               }}
@@ -60,28 +75,10 @@ export function Player({ conqueredCountries, ownedCountries, scoreLimit }) {
             display="flex"
             gap={1}
           >
-            {country.name}
+            {country?.name}
           </Typography>
         </Stack>
       ))}
-
-      <Stack spacing={2} paddingX={10}>
-        <Stack direction="row" alignItems="center" justifyContent="center">
-          <TrophyIcon />
-          <Typography textAlign="center" color="black">
-            Score:
-            {' '}
-            {ownedCountries.length}
-            /
-            {scoreLimit}
-          </Typography>
-        </Stack>
-        <LinearProgress
-          variant="determinate"
-          value={scorePercentage}
-          sx={{ borderRadius: 1, padding: 0.3 }}
-        />
-      </Stack>
     </Stack>
   );
 }

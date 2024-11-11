@@ -58,19 +58,19 @@ export default function QuestionDialog({
       const randomCountry = countries[Math.floor(Math.random() * countries.length)];
       if (client && client.connected) {
         const messageToSend = {
-          countryName: randomCountry.name,
+          countryName: randomCountry?.name,
           username: opponent,
-          flag: randomCountry.flags,
-          area: randomCountry.area,
+          flag: randomCountry?.flags,
+          area: randomCountry?.area,
         };
         client.send('/app/countries', {}, JSON.stringify(messageToSend));
         setOwnedCountries([...OwnedCountries, randomCountry]);
       } else {
         toast.info('You are not connected to the server');
       }
-      toast.success('Correct answer!');
+      toast.success('Correct answer! Defence successful 🛡️');
     } else {
-      toast.error('Wrong answer!');
+      toast.error('Wrong answer! Defend failed💥. Lost a City');
       // Handle removing the last country
       if (OwnedCountries.length > 0) {
         const lastCountry = OwnedCountries[OwnedCountries.length - 1]; // Get the last country
@@ -79,10 +79,10 @@ export default function QuestionDialog({
 
         if (client && client.connected) {
           const messageToSend = {
-            countryName: lastCountry.name,
+            countryName: lastCountry?.name,
             username: opponent,
-            flag: lastCountry.flags,
-            area: lastCountry.area,
+            flag: lastCountry?.flags,
+            area: lastCountry?.area,
             action: 'remove',
           };
           client.send('/app/countries/remove', {}, JSON.stringify(messageToSend)); // Send the correct message
@@ -104,7 +104,7 @@ export default function QuestionDialog({
       onClose={handleClose}
       aria-describedby="alert-dialog-slide-description"
     >
-      <DialogTitle>Trivia Question</DialogTitle>
+      <DialogTitle color="error" fontWeight={700}>INCOMING ENEMY ATTACK !! ⚔️</DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-slide-description">
           {decodeHtmlEntities(randomQuestion.question)}
