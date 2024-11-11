@@ -1,5 +1,7 @@
-[!image1](/image-1.png)
-[!image2](/image.png)
+![image1](/image-1.png)
+![image2](/image.png)
+// add image
+
 # Getting Started with Create React App
 
 
