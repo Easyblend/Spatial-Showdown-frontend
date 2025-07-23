@@ -69,7 +69,14 @@ export default function HelperDialogue({ open, setOpen }) {
           title: '🚀 How to Join the Battle',
           items: [
             'Player One: Sign up with a unique commander name.',
-            'Player Two: Enter the same name to join the war room.',
+            'Player Two: Enter the same or a different name to join the war room.',
+            <li key="self-play" style={{ fontWeight: 'bold', color: '#d32f2f' }}>
+              🔥 No second player?
+              {' '}
+              <u>You can play against yourself</u>
+              {' '}
+              by entering your name as both player and opponent!
+            </li>,
             'AI Opponents coming soon!',
           ],
         }, {
