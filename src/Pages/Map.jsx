@@ -56,7 +56,6 @@ function Map({ setPage }) {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
-        console.log('Fetched trivia questions:', data.results);
         setQuestions(data.results);
         localStorage.setItem('triviaQuestions', JSON.stringify(data.results));
       } catch (error) {
