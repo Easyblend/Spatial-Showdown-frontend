@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { Stack } from '@mui/material';
 
-export default function Navbar({ setPage }) {
+export default function Navbar({ setPage, setOpen }) {
   return (
     <Box
       zIndex={100}
@@ -44,6 +44,12 @@ export default function Navbar({ setPage }) {
               onClick={() => setPage('technology')}
             >
               Technology
+            </Button>
+            <Button
+              color="inherit"
+              onClick={() => setOpen(true)}
+            >
+              Help
             </Button>
           </Stack>
           <Button

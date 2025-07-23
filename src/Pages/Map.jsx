@@ -10,7 +10,7 @@ import {
   Avatar, Button, Divider, Stack, Typography,
 } from '@mui/material';
 import Confetti from 'react-confetti';
-import QuestionDialog from '../Component/Questions Popovers/QuestionDialog';
+import QuestionDialog from '../Component/Popovers/QuestionDialog';
 import { usePlayerContext } from '../Hooks/UsePlayerData';
 import Enemy from '../Component/CapturedNations/Enemy';
 import { Player } from '../Component/CapturedNations/Player';
@@ -44,17 +44,26 @@ function Map({ setPage }) {
 
   // Fetch trivia questions
   useEffect(() => {
+    const cached = localStorage.getItem('triviaQuestions');
+    if (cached) {
+      setQuestions(JSON.parse(cached));
+      return;
+    }
+
     async function fetchTriviaQuestions() {
-      const url = 'https://opentdb.com/api.php?amount=50&category=18';
+      const url = 'https://opentdb.com/api.php?amount=20';
       try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
+        console.log('Fetched trivia questions:', data.results);
         setQuestions(data.results);
+        localStorage.setItem('triviaQuestions', JSON.stringify(data.results));
       } catch (error) {
-        toast.error('Error fetching trivia questions:', error);
+        toast.error('Error fetching trivia questions');
       }
     }
+
     fetchTriviaQuestions();
   }, []);
 
@@ -62,7 +71,7 @@ function Map({ setPage }) {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const response = await fetch('https://restcountries.com/v3.1/all');
+        const response = await fetch('https://restcountries.com/v3.1/all?fields=name,flags,population,area');
         const data = await response.json();
         const countryNames = data.map((country) => ({
           name: country.name.common,
@@ -97,7 +106,7 @@ function Map({ setPage }) {
   }, [ownedCountries]);
 
   useEffect(() => {
-    const socket = new SockJS('https://my-springboot-app-service.azurewebsites.net/ws');
+    const socket = new SockJS('https://spatial-showdown-production.up.railway.app/ws');
     const stompClient = Stomp.over(socket);
 
     stompClient.connect({}, () => {

@@ -9,13 +9,14 @@ import Technology from './Pages/Technology';
 
 function App() {
   const [page, setPage] = React.useState('websocket');
+  const [open, setOpen] = React.useState(false);
 
   let content;
 
   if (page === 'map') {
     content = <Map page={page} setPage={setPage} />;
   } else if (page === 'websocket') {
-    content = <WebSocketComponent setPage={setPage} page={page} />;
+    content = <WebSocketComponent setPage={setPage} page={page} open={open} setOpen={setOpen} />;
   } else if (page === 'technology') {
     content = <Technology page={page} setPage={setPage} />;
   } else {
@@ -24,9 +25,9 @@ function App() {
 
   return (
     <PlayerProvider>
-      <Stack width="100vw" height="100vh">
+      <Stack width="100vw" height="100vh" overflow="hidden" position="relative">
         <Background />
-        <Navbar setPage={setPage} />
+        <Navbar setPage={setPage} setOpen={setOpen} />
         {content}
       </Stack>
     </PlayerProvider>
