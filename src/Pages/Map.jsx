@@ -28,6 +28,7 @@ function Map({ setPage }) {
   const [open, setOpen] = useState(false);
   const [countries, setCountries] = useState([]);
   const [choosenCountry, setChoosenCountry] = useState([]);
+  const [geoJsonData, setGeoJsonData] = useState(null);
 
   const [playerWins, setPlayerWins] = useState(false);
   const [opponentWins, setOpponentWins] = useState(false);
@@ -72,12 +73,12 @@ function Map({ setPage }) {
       try {
         const response = await fetch('https://restcountries.com/v3.1/all?fields=name,flags,population,area');
         const data = await response.json();
-        const countryNames = data.map((country) => ({
+        const countryObjects = data.map((country) => ({
           name: country.name.common,
           flags: country.flags.png,
           area: country.area,
         }));
-        setCountries(countryNames);
+        setCountries(countryObjects);
       } catch (error) {
         toast.error('Error fetching country data:', error);
         setPage('websocket');
@@ -87,22 +88,32 @@ function Map({ setPage }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // fetch countries geojson data and boundaries
   useEffect(() => {
-    // fetch countries geojson data and boundaries
-    const fetchCountryData = async (countryName) => {
-      const response = await fetch('https://r2.datahub.io/clvyjaryy0000la0cxieg4o8o/main/raw/data/countries.geojson');
-      const data = await response.json();
-      // Filter for the specific country
-      const countryData = data.features.filter(
-        (feature) => feature.properties.ADMIN === countryName?.name,
-      );
-      return countryData;
+    const fetchGeoJsonData = async () => {
+      try {
+        const response = await fetch('https://r2.datahub.io/clvyjaryy0000la0cxieg4o8o/main/raw/data/countries.geojson');
+        const data = await response.json();
+        setGeoJsonData(data);
+      } catch (error) {
+        toast.error('Error fetching geojson data');
+      }
     };
 
-    fetchCountryData(ownedCountries[ownedCountries.length - 1]).then((countryData) => {
-      setChoosenCountry(countryData);
-    });
-  }, [ownedCountries]);
+    fetchGeoJsonData();
+  }, []);
+
+  useEffect(() => {
+    if (!geoJsonData || ownedCountries.length === 0) return;
+
+    const lastOwnedCountry = ownedCountries[ownedCountries.length - 1];
+
+    const countryData = geoJsonData.features.filter(
+      (feature) => feature.properties.name === lastOwnedCountry?.name,
+    );
+
+    setChoosenCountry(countryData);
+  }, [ownedCountries, geoJsonData]);
 
   useEffect(() => {
     const socket = new SockJS('https://spatial-showdown-production.up.railway.app/ws');
@@ -144,7 +155,7 @@ function Map({ setPage }) {
     const updateConqueredCountriesOnServer = (updatedCountries) => {
       const uniqueCountries = updatedCountries.filter(
         (country, index, self) => index
-        === self.findIndex((c) => c.countryName === country.countryName),
+        === self.findIndex((c) => c.countryObject === country.countryObject),
       );
 
       if (uniqueCountries.length > 0) {
@@ -156,7 +167,7 @@ function Map({ setPage }) {
     }
   }, [conqueredCountries, client]);
 
-  const filterOwnedCountries = useCallback(() => ['any', ...ownedCountries.map((country) => ['==', ['get', 'ADMIN'], country.name])], [ownedCountries]);
+  const filterOwnedCountries = useCallback(() => ['any', ...ownedCountries.map((country) => ['==', ['get', 'name'], country.name])], [ownedCountries]);
 
   const updateFilters = useCallback(() => {
     if (ownedCountries.length > 0) {
@@ -181,7 +192,7 @@ function Map({ setPage }) {
         id: 'countries-fill',
         type: 'fill',
         source: 'country-boundaries-1',
-        filter: ['!in', 'ADMIN', ...ownedCountries],
+        filter: ['!in', 'name', ...ownedCountries],
         paint: {
           'fill-color': '#fff',
           'fill-opacity': 1,
@@ -235,14 +246,25 @@ function Map({ setPage }) {
   useEffect(() => {
     if (!choosenCountry || choosenCountry.length < 1) return;
 
-    const { coordinates } = choosenCountry[0].geometry;
-    const firstPolygon = coordinates[0][0];
+    const geometry = choosenCountry[0]?.geometry;
+    if (!geometry) return;
 
-    if (!firstPolygon || firstPolygon.length === 0) {
-      toast.info('No valid polygon coordinates found.');
+    let firstPolygon;
+
+    if (geometry.type === 'Polygon') {
+      [firstPolygon] = geometry.coordinates;
+    } else if (geometry.type === 'MultiPolygon') {
+      const [firstMultiPolygon] = geometry.coordinates;
+      [firstPolygon] = firstMultiPolygon;
+    } else {
+      toast.error('Unsupported geometry type');
       return;
     }
 
+    if (!firstPolygon || !firstPolygon.length) {
+      toast.info('No valid polygon coordinates found.');
+      return;
+    }
     const [lngSum, latSum] = firstPolygon.reduce(
       ([lngAcc, latAcc], [lng, lat]) => [lngAcc + lng, latAcc + lat],
       [0, 0],
@@ -281,6 +303,11 @@ function Map({ setPage }) {
   // Add markers to the map
   useEffect(() => {
     if (!mapRef.current) return;
+    if (
+      !choosenCountry.length
+    || !choosenCountry[0].geometry
+    || !Array.isArray(choosenCountry[0].geometry.coordinates)
+    ) return;
     markers.forEach((marker) => {
       if (marker.geometry) {
         if (marker.geometry.type === 'Polygon') {
@@ -296,19 +323,10 @@ function Map({ setPage }) {
             },
           });
 
-          const ownedCountryNames = ownedCountries.map((country) => country?.name);
+          const ownedcountryObjects = ownedCountries.map((country) => country?.name);
           if (mapRef.current.getLayer('countries-fill')) {
             mapRef.current.removeLayer('countries-fill');
           }
-          mapRef.current.addLayer({
-            id: polygonId,
-            type: 'fill',
-            source: polygonId,
-            paint: {
-              'fill-color': '#000',
-              'fill-opacity': 1,
-            },
-          });
 
           if (mapRef.current.getLayer('highlighted-country-fill')) {
             mapRef.current.removeLayer('highlighted-country-fill');
@@ -318,7 +336,7 @@ function Map({ setPage }) {
               id: 'countries-fill',
               type: 'fill',
               source: 'country-boundaries-1',
-              filter: ['!in', 'ADMIN', ...ownedCountryNames], // Use the extracted names
+              filter: ['!in', 'name', ...ownedcountryObjects], // Use the extracted names
               paint: {
                 'fill-color': '#fff',
                 'fill-opacity': 1,
@@ -336,7 +354,7 @@ function Map({ setPage }) {
               id: 'highlighted-country-line',
               type: 'line',
               source: 'country-boundaries-1',
-              filter: ['in', 'ADMIN', ...ownedCountryNames], // Use the extracted names
+              filter: ['in', 'name', ...ownedcountryObjects], // Use the extracted names
               paint: {
                 'line-color': '#F3C623',
                 'line-width': 4,
