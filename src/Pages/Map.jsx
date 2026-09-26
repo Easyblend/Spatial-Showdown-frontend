@@ -121,7 +121,7 @@ function Map({ setPage }) {
   }, [ownedCountries, geoJsonData]);
 
   useEffect(() => {
-    const socket = new SockJS('https://spatial-showdown-production.up.railway.app/ws');
+    const socket = new SockJS('https://spatial-showdown.onrender.com/ws');
     const stompClient = Stomp.over(socket);
 
     stompClient.connect({}, () => {

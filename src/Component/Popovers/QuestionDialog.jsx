@@ -70,7 +70,7 @@ export default function QuestionDialog({
       }
       toast.success('Correct answer! Defence successful 🛡️');
     } else {
-      toast.error('Wrong answer! Defend failed💥. Lost a City');
+      toast.warn('Wrong answer! Defend failed💥. Lost a City');
       // Handle removing the last country
       if (OwnedCountries.length > 0) {
         const lastCountry = OwnedCountries[OwnedCountries.length - 1]; // Get the last country
