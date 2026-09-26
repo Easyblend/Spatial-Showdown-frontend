@@ -71,16 +71,21 @@ function Map({ setPage }) {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const response = await fetch('https://restcountries.com/v3.1/all?fields=name,flags,population,area');
+        const response = await fetch('https://api.restcountries.com/countries/v5?response_fields=names,flag,population,area', {
+          headers: {
+            Authorization: `Bearer ${process.env.REACT_APP_REST_COUNTRY_API_KEY}`,
+          },
+        });
         const data = await response.json();
-        const countryObjects = data.map((country) => ({
-          name: country.name.common,
-          flags: country.flags.png,
-          area: country.area,
+        const countryObjects = data.data.objects.map((country) => ({
+          name: country.names.common,
+          flags: country.flag,
+          population: country.population,
+          area: country.area.kilometers,
         }));
         setCountries(countryObjects);
       } catch (error) {
-        toast.error('Error fetching country data:', error);
+        toast.error('Error fetching country data');
         setPage('websocket');
       }
     };
@@ -155,7 +160,7 @@ function Map({ setPage }) {
     const updateConqueredCountriesOnServer = (updatedCountries) => {
       const uniqueCountries = updatedCountries.filter(
         (country, index, self) => index
-        === self.findIndex((c) => c.countryObject === country.countryObject),
+          === self.findIndex((c) => c.countryObject === country.countryObject),
       );
 
       if (uniqueCountries.length > 0) {
@@ -206,7 +211,7 @@ function Map({ setPage }) {
   // Initialize map
   useEffect(() => {
     if (!mapRef.current) {
-      mapboxgl.accessToken = 'pk.eyJ1IjoiZWt1bWFoIiwiYSI6ImNsc3gxdTl4dTB6eTQyanF0ZXQyZnFvNWgifQ.-Kl5xFcytSklzF7ASxfQkw';
+      mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
       mapRef.current = new mapboxgl.Map({
         container: mapContainerRef.current,
         center: [-74.5, 40],
@@ -240,7 +245,7 @@ function Map({ setPage }) {
         mapRef.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -305,8 +310,8 @@ function Map({ setPage }) {
     if (!mapRef.current) return;
     if (
       !choosenCountry.length
-    || !choosenCountry[0].geometry
-    || !Array.isArray(choosenCountry[0].geometry.coordinates)
+      || !choosenCountry[0].geometry
+      || !Array.isArray(choosenCountry[0].geometry.coordinates)
     ) return;
     markers.forEach((marker) => {
       if (marker.geometry) {
@@ -523,37 +528,37 @@ function Map({ setPage }) {
         left={0}
       >
         {playerWins && (
-        <Confetti numberOfPieces={2000} />
+          <Confetti numberOfPieces={2000} />
         )}
         {(playerWins || opponentWins) && (
-        <Stack
-          height="100%"
-          width="100%"
-          justifyContent="center"
-          sx={{
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            overflow: 'hidden',
-            color: 'white', // Optional for better contrast
-            textAlign: 'center', // Center align text
-          }}
-        >
-          <div className="gameover">
-            <h1>{playerWins ? 'VICTORY' : 'GAME OVER'}</h1>
-            <span>
-              {playerWins ? `You conquered all Nations! and outsmarted ${opponent}` : `${opponent} conquered all Nations, He's Smarter`}
-            </span>
-          </div>
-          <Stack width="fit-content" marginX="auto">
-            <Button
-              variant="contained"
-              onClick={() => setPage('websocket')}
-              color={playerWins ? 'success' : 'error'}
-            >
-              {playerWins ? 'Gracefully ' : 'Shamefully ' }
-              head back to Menu
-            </Button>
+          <Stack
+            height="100%"
+            width="100%"
+            justifyContent="center"
+            sx={{
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              overflow: 'hidden',
+              color: 'white', // Optional for better contrast
+              textAlign: 'center', // Center align text
+            }}
+          >
+            <div className="gameover">
+              <h1>{playerWins ? 'VICTORY' : 'GAME OVER'}</h1>
+              <span>
+                {playerWins ? `You conquered all Nations! and outsmarted ${opponent}` : `${opponent} conquered all Nations, He's Smarter`}
+              </span>
+            </div>
+            <Stack width="fit-content" marginX="auto">
+              <Button
+                variant="contained"
+                onClick={() => setPage('websocket')}
+                color={playerWins ? 'success' : 'error'}
+              >
+                {playerWins ? 'Gracefully ' : 'Shamefully '}
+                head back to Menu
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
         )}
       </Stack>
     </Stack>
